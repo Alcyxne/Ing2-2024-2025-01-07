@@ -29,61 +29,38 @@ void addInteraction(Species species[], int prey, int predator) {
     species[prey].eatenBy[species[prey].eatenByCount++] = predator;
 }
 
-// Afficher les relations "Mange par" et "Mange quoi"
-void displayNetwork(Species species[], int n) {
-    printf("\nRéseau Trophique :\n");
+// Afficher les informations sur une espèce spécifique
+void displaySpeciesInfo(Species species[], int n, char *speciesName) {
     for (int i = 0; i < n; i++) {
-        printf("\nEspèce : %s (Biomasse: %.2f)\n", species[i].name, species[i].biomass);
+        if (strcmp(species[i].name, speciesName) == 0) {
+            printf("\nInformations sur l'espece : %s\n", species[i].name);
+            printf("Biomasse : %.2f\n", species[i].biomass);
 
-        // Mange quoi
-        printf("  Mange quoi : ");
-        if (species[i].eatCount == 0) {
-            printf("Aucun\n");
-        } else {
-            for (int j = 0; j < species[i].eatCount; j++) {
-                printf("%s ", species[species[i].eats[j]].name);
-            }
-            printf("\n");
-        }
-
-        // Mange par
-        printf("  Mangé par : ");
-        if (species[i].eatenByCount == 0) {
-            printf("Aucun\n");
-        } else {
-            for (int j = 0; j < species[i].eatenByCount; j++) {
-                printf("%s ", species[species[i].eatenBy[j]].name);
-            }
-            printf("\n");
-        }
-    }
-}
-
-// Simuler une dynamique simplifiée des biomasses
-void simulateDynamics(Species species[], int n, int steps) {
-    for (int step = 0; step < steps; step++) {
-        printf("\nÉtat au pas de temps %d :\n", step + 1);
-        for (int i = 0; i < n; i++) {
-            float loss = 0.1 * species[i].biomass; // Perte naturelle
-            float gain = 0;
-
-            // Calcul des gains de biomasse depuis les proies
-            for (int j = 0; j < species[i].eatCount; j++) {
-                int prey = species[i].eats[j];
-                gain += 0.05 * species[prey].biomass; // Gain proportionnel
+            // Liste des espèces qu'elle mange
+            printf("Mange quoi : ");
+            if (species[i].eatCount == 0) {
+                printf("Aucun\n");
+            } else {
+                for (int j = 0; j < species[i].eatCount; j++) {
+                    printf("%s ", species[species[i].eats[j]].name);
+                }
+                printf("\n");
             }
 
-            // Mise à jour de la biomasse
-            species[i].biomass = species[i].biomass + gain - loss;
-
-            // Empêcher des biomasses négatives
-            if (species[i].biomass < 0) {
-                species[i].biomass = 0;
+            // Liste des espèces qui la mangent
+            printf("Mangee par : ");
+            if (species[i].eatenByCount == 0) {
+                printf("Aucun\n");
+            } else {
+                for (int j = 0; j < species[i].eatenByCount; j++) {
+                    printf("%s ", species[species[i].eatenBy[j]].name);
+                }
+                printf("\n");
             }
-
-            printf("%s : Biomasse = %.2f\n", species[i].name, species[i].biomass);
+            return;
         }
     }
+    printf("\nEspece non trouvée : %s\n", speciesName);
 }
 
 int main() {
@@ -95,7 +72,7 @@ int main() {
     initSpecies(&species[2], "Algues", 400);
     initSpecies(&species[3], "Petit_poisson", 200);
     initSpecies(&species[4], "Grand_poisson", 100);
-    initSpecies(&species[5], "Crustacés", 150);
+    initSpecies(&species[5], "Crustaces", 150);
     initSpecies(&species[6], "Oiseaux_marins", 50);
     initSpecies(&species[7], "Requin", 20);
     initSpecies(&species[8], "Dauphin", 30);
@@ -114,14 +91,17 @@ int main() {
     addInteraction(species, 8, 9); // Dauphin -> Orque
     addInteraction(species, 7, 9); // Requin -> Orque
 
-    // Afficher le réseau trophique
-    displayNetwork(species, n);
-
-    // Simuler la dynamique trophique
-    int steps;
-    printf("\nEntrez le nombre de pas de temps pour la simulation : ");
-    scanf("%d", &steps);
-    simulateDynamics(species, n, steps);
+    // Interaction avec l'utilisateur
+    char input[50];
+    printf("Entrez le nom de l'espece pour obtenir ses informations (ou 'exit' pour quitter) : ");
+    while (1) {
+        scanf("%s", input);
+        if (strcmp(input, "exit") == 0) {
+            break;
+        }
+        displaySpeciesInfo(species, n, input);
+        printf("\nEntrez un autre nom d'espece (ou 'exit' pour quitter) : ");
+    }
 
     return 0;
 }
