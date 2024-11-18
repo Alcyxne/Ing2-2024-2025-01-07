@@ -1,39 +1,66 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_SPECIES 10
+#define MAX_RELATIONS 10
 
 // Structure pour représenter une espèce
 typedef struct {
-    char name[50];
-    float biomass; // Biomasse de l'espèce
+    char name[50];             // Nom de l'espèce
+    float biomass;             // Biomasse
+    int eats[MAX_RELATIONS];   // Index des espèces que cette espèce mange
+    int eatenBy[MAX_RELATIONS];// Index des espèces qui mangent cette espèce
+    int eatCount;              // Nombre d'espèces qu'elle mange
+    int eatenByCount;          // Nombre d'espèces qui la mangent
 } Species;
 
-// Afficher le réseau trophique (matrice d'adjacence)
-void displayNetwork(int matrix[MAX_SPECIES][MAX_SPECIES], Species species[], int n) {
-    printf("\nRéseau Trophique :\n");
-    printf("   ");
-    for (int i = 0; i < n; i++) {
-        printf("%s ", species[i].name);
-    }
-    printf("\n");
-    
-    for (int i = 0; i < n; i++) {
-        printf("%s ", species[i].name);
-        for (int j = 0; j < n; j++) {
-            printf("  %d ", matrix[i][j]);
-        }
-        printf("\n");
-    }
+// Initialiser une espèce
+void initSpecies(Species *species, char *name, float biomass) {
+    strcpy(species->name, name);
+    species->biomass = biomass;
+    species->eatCount = 0;
+    species->eatenByCount = 0;
 }
 
-// Ajouter une interaction trophique
-void addInteraction(int matrix[MAX_SPECIES][MAX_SPECIES], int prey, int predator) {
-    matrix[prey][predator] = 1; // Le prédateur dépend de la proie
+// Ajouter une interaction (prédation)
+void addInteraction(Species species[], int prey, int predator) {
+    species[predator].eats[species[predator].eatCount++] = prey;
+    species[prey].eatenBy[species[prey].eatenByCount++] = predator;
+}
+
+// Afficher les relations "Mange par" et "Mange quoi"
+void displayNetwork(Species species[], int n) {
+    printf("\nRéseau Trophique :\n");
+    for (int i = 0; i < n; i++) {
+        printf("\nEspèce : %s (Biomasse: %.2f)\n", species[i].name, species[i].biomass);
+
+        // Mange quoi
+        printf("  Mange quoi : ");
+        if (species[i].eatCount == 0) {
+            printf("Aucun\n");
+        } else {
+            for (int j = 0; j < species[i].eatCount; j++) {
+                printf("%s ", species[species[i].eats[j]].name);
+            }
+            printf("\n");
+        }
+
+        // Mange par
+        printf("  Mangé par : ");
+        if (species[i].eatenByCount == 0) {
+            printf("Aucun\n");
+        } else {
+            for (int j = 0; j < species[i].eatenByCount; j++) {
+                printf("%s ", species[species[i].eatenBy[j]].name);
+            }
+            printf("\n");
+        }
+    }
 }
 
 // Simuler une dynamique simplifiée des biomasses
-void simulateDynamics(int matrix[MAX_SPECIES][MAX_SPECIES], Species species[], int n, int steps) {
+void simulateDynamics(Species species[], int n, int steps) {
     for (int step = 0; step < steps; step++) {
         printf("\nÉtat au pas de temps %d :\n", step + 1);
         for (int i = 0; i < n; i++) {
@@ -41,10 +68,9 @@ void simulateDynamics(int matrix[MAX_SPECIES][MAX_SPECIES], Species species[], i
             float gain = 0;
 
             // Calcul des gains de biomasse depuis les proies
-            for (int j = 0; j < n; j++) {
-                if (matrix[j][i] == 1) { // Si j est une proie de i
-                    gain += 0.05 * species[j].biomass; // Gain proportionnel
-                }
+            for (int j = 0; j < species[i].eatCount; j++) {
+                int prey = species[i].eats[j];
+                gain += 0.05 * species[prey].biomass; // Gain proportionnel
             }
 
             // Mise à jour de la biomasse
@@ -61,44 +87,41 @@ void simulateDynamics(int matrix[MAX_SPECIES][MAX_SPECIES], Species species[], i
 }
 
 int main() {
-    // Initialisation des 10 espèces
+    // Initialisation des espèces
     int n = 10;
-    Species species[MAX_SPECIES] = {
-        {"Phytoplancton", 500},
-        {"Zooplancton", 300},
-        {"Algues", 400},
-        {"Petit_poisson", 200},
-        {"Grand_poisson", 100},
-        {"Crustacés", 150},
-        {"Oiseaux_marins", 50},
-        {"Requin", 20},
-        {"Dauphin", 30},
-        {"Orque", 10}
-    };
-
-    int matrix[MAX_SPECIES][MAX_SPECIES] = {0};
+    Species species[MAX_SPECIES];
+    initSpecies(&species[0], "Phytoplancton", 500);
+    initSpecies(&species[1], "Zooplancton", 300);
+    initSpecies(&species[2], "Algues", 400);
+    initSpecies(&species[3], "Petit_poisson", 200);
+    initSpecies(&species[4], "Grand_poisson", 100);
+    initSpecies(&species[5], "Crustacés", 150);
+    initSpecies(&species[6], "Oiseaux_marins", 50);
+    initSpecies(&species[7], "Requin", 20);
+    initSpecies(&species[8], "Dauphin", 30);
+    initSpecies(&species[9], "Orque", 10);
 
     // Définir les interactions
-    addInteraction(matrix, 0, 1); // Phytoplancton -> Zooplancton
-    addInteraction(matrix, 0, 2); // Phytoplancton -> Algues
-    addInteraction(matrix, 1, 3); // Zooplancton -> Petit poisson
-    addInteraction(matrix, 2, 3); // Algues -> Petit poisson
-    addInteraction(matrix, 3, 4); // Petit poisson -> Grand poisson
-    addInteraction(matrix, 3, 5); // Petit poisson -> Crustacés
-    addInteraction(matrix, 5, 6); // Crustacés -> Oiseaux marins
-    addInteraction(matrix, 4, 7); // Grand poisson -> Requin
-    addInteraction(matrix, 4, 8); // Grand poisson -> Dauphin
-    addInteraction(matrix, 8, 9); // Dauphin -> Orque
-    addInteraction(matrix, 7, 9); // Requin -> Orque
+    addInteraction(species, 0, 1); // Phytoplancton -> Zooplancton
+    addInteraction(species, 0, 2); // Phytoplancton -> Algues
+    addInteraction(species, 1, 3); // Zooplancton -> Petit poisson
+    addInteraction(species, 2, 3); // Algues -> Petit poisson
+    addInteraction(species, 3, 4); // Petit poisson -> Grand poisson
+    addInteraction(species, 3, 5); // Petit poisson -> Crustacés
+    addInteraction(species, 5, 6); // Crustacés -> Oiseaux marins
+    addInteraction(species, 4, 7); // Grand poisson -> Requin
+    addInteraction(species, 4, 8); // Grand poisson -> Dauphin
+    addInteraction(species, 8, 9); // Dauphin -> Orque
+    addInteraction(species, 7, 9); // Requin -> Orque
 
     // Afficher le réseau trophique
-    displayNetwork(matrix, species, n);
+    displayNetwork(species, n);
 
     // Simuler la dynamique trophique
     int steps;
     printf("\nEntrez le nombre de pas de temps pour la simulation : ");
     scanf("%d", &steps);
-    simulateDynamics(matrix, species, n, steps);
+    simulateDynamics(species, n, steps);
 
     return 0;
 }
