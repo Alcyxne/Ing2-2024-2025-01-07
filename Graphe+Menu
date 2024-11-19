@@ -10,7 +10,7 @@ typedef struct {
     char name[50];             // Nom de l'espèce
     int eats[MAX_RELATIONS];   // Index des espèces que cette espèce mange
     float eatWeights[MAX_RELATIONS]; // Fréquences de prédation pour chaque proie
-    int eatenBy[MAX_RELATIONS];// Index des espèces qui mangent cette espèce
+    int eatenBy[MAX_RELATIONS]; // Index des espèces qui mangent cette espèce
     float eatenByWeights[MAX_RELATIONS]; // Fréquences de prédation par chaque prédateur
     int eatCount;              // Nombre d'espèces qu'elle mange
     int eatenByCount;          // Nombre d'espèces qui la mangent
@@ -110,11 +110,18 @@ void createMarineNetwork(Species species[]) {
     addInteraction(species, 0, 9, 15.0); // Phytoplancton -> Oiseau Marin (15%)
 }
 
+// Effacer l'écran sous Windows
+void clearScreen() {
+    system("cls"); // Sur Windows
+}
+
 int main() {
     int choice, speciesChoice;
     Species species[MAX_SPECIES];
 
     while (1) {
+        clearScreen(); // Effacer l'écran avant chaque cycle de menu
+
         // Affichage du menu
         printf("\n===== Menu Reseaux Trophiques =====\n");
         printf("1. Reseau Trophique des Oiseaux\n");
@@ -126,44 +133,54 @@ int main() {
         switch (choice) {
             case 1:
                 createBirdsNetwork(species);
-                printf("\nSelectionnez une espece (0 à 9) :\n");
-                for (int i = 0; i < 10; i++) {
-                    printf("%d. %s\n", i, species[i].name);
-                }
-                printf("Entrez le numero de l'espece : ");
-                scanf("%d", &speciesChoice);
-                if (speciesChoice >= 0 && speciesChoice < 10) {
-                    displaySpeciesInfo(species, speciesChoice);
-                } else {
-                    printf("Choix invalide.\n");
+                while (1) {
+                    printf("\nSelectionnez une espece (0 a 9) ou 10 pour revenir au menu principal :\n");
+                    for (int i = 0; i < 10; i++) {
+                        printf("%d. %s\n", i, species[i].name);
+                    }
+                    printf("Entrez le numero de l'espece : ");
+                    scanf("%d", &speciesChoice);
+                    if (speciesChoice >= 0 && speciesChoice < 10) {
+                        clearScreen(); // Effacer l'écran avant d'afficher les informations de l'espèce
+                        displaySpeciesInfo(species, speciesChoice);
+                    } else if (speciesChoice == 10) {
+                        break; // Retour au menu principal
+                    } else {
+                        printf("Choix invalide.\n");
+                    }
                 }
                 break;
 
             case 2:
                 createMarineNetwork(species);
-                printf("\nSelectionnez une espece (0 a 9) :\n");
-                for (int i = 0; i < 10; i++) {
-                    printf("%d. %s\n", i, species[i].name);
-                }
-                printf("Entrez le numero de l'espece : ");
-                scanf("%d", &speciesChoice);
-                if (speciesChoice >= 0 && speciesChoice < 10) {
-                    displaySpeciesInfo(species, speciesChoice);
-                } else {
-                    printf("Choix invalide.\n");
+                while (1) {
+                    printf("\nSelectionnez une espece (0 a 9) ou 10 pour revenir au menu principal :\n");
+                    for (int i = 0; i < 10; i++) {
+                        printf("%d. %s\n", i, species[i].name);
+                    }
+                    printf("Entrez le numero de l'espece : ");
+                    scanf("%d", &speciesChoice);
+                    if (speciesChoice >= 0 && speciesChoice < 10) {
+                        displaySpeciesInfo(species, speciesChoice);
+                    } else if (speciesChoice == 10) {
+                        break; // Retour au menu principal
+                    } else {
+                        printf("Choix invalide.\n");
+                    }
                 }
                 break;
 
             case 3:
-                printf("Au revoir !\n");
-                exit(0);
-                break;
+                printf("Merci d'avoir utilisé le programme !\n");
+                return 0; // Quitter le programme
 
             default:
-                printf("Choix invalide. Veuillez réessayer.\n");
+                printf("Choix invalide. Essayez encore.\n");
+                break;
         }
     }
 
     return 0;
 }
+
 
