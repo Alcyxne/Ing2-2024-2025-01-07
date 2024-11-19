@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SPECIES 10
+#define MAX_RELATIONS 10
+
+// Structure pour représenter une espèce
+typedef struct {
+    char name[50];             // Nom de l'espèce
+    int eats[MAX_RELATIONS];   // Index des espèces que cette espèce mange
+    float eatWeights[MAX_RELATIONS]; // Fréquences de prédation pour chaque proie
+    int eatenBy[MAX_RELATIONS];// Index des espèces qui mangent cette espèce
+    float eatenByWeights[MAX_RELATIONS]; // Fréquences de prédation par chaque prédateur
+    int eatCount;              // Nombre d'espèces qu'elle mange
+    int eatenByCount;          // Nombre d'espèces qui la mangent
+} Species;
+
+// Initialiser une espèce
+void initSpecies(Species *species, char *name) {
+    strcpy(species->name, name);
+    species->eatCount = 0;
+    species->eatenByCount = 0;
+}
+
+// Ajouter une interaction (prédation avec poids)
+void addInteraction(Species species[], int prey, int predator, float weight) {
+    species[predator].eats[species[predator].eatCount] = prey;
+    species[predator].eatWeights[species[predator].eatCount++] = weight;
+
+    species[prey].eatenBy[species[prey].eatenByCount] = predator;
+    species[prey].eatenByWeights[species[prey].eatenByCount++] = weight;
+}
+
+// Afficher les informations sur une espèce spécifique
+void displaySpeciesInfo(Species species[], int n, char *speciesName) {
+    for (int i = 0; i < n; i++) {
+        if (strcmp(species[i].name, speciesName) == 0) {
+            printf("\nInformations sur l'espece : %s\n", species[i].name);
+
+            // Liste des espèces qu'elle mange
+            printf("Mange quoi : ");
+            if (species[i].eatCount == 0) {
+                printf("Aucun\n");
+            } else {
+                for (int j = 0; j < species[i].eatCount; j++) {
+                    printf("%s (%.1f%%) ", species[species[i].eats[j]].name, species[i].eatWeights[j]);
+                }
+                printf("\n");
+            }
+
+            // Liste des espèces qui la mangent
+            printf("Mangee par : ");
+            if (species[i].eatenByCount == 0) {
+                printf("Aucun\n");
+            } else {
+                for (int j = 0; j < species[i].eatenByCount; j++) {
+                    printf("%s (%.1f%%) ", species[species[i].eatenBy[j]].name, species[i].eatenByWeights[j]);
+                }
+                printf("\n");
+            }
+            return;
+        }
+    }
+    printf("\nEspece non trouvee : %s\n", speciesName);
+}
+
+int main() {
+    // Initialisation des espèces
+    int n = 10;
+    Species species[MAX_SPECIES];
+    initSpecies(&species[0], "Moineau");
+    initSpecies(&species[1], "Faucon");
+    initSpecies(&species[2], "Merle");
+    initSpecies(&species[3], "Pigeon");
+    initSpecies(&species[4], "Corbeau");
+    initSpecies(&species[5], "Hibou");
+    initSpecies(&species[6], "Aigle");
+    initSpecies(&species[7], "Colibri");
+    initSpecies(&species[8], "Rouge-gorge");
+    initSpecies(&species[9], "Perroquet");
+
+    // Définir les interactions avec des fréquences de prédation (en pourcentage)
+    addInteraction(species, 0, 1, 30.0); // Moineau -> Faucon (30%)
+    addInteraction(species, 0, 5, 20.0); // Moineau -> Hibou (20%)
+    addInteraction(species, 1, 6, 15.0); // Faucon -> Aigle (15%)
+    addInteraction(species, 2, 1, 25.0); // Merle -> Faucon (25%)
+    addInteraction(species, 2, 7, 10.0); // Merle -> Colibri (10%)
+    addInteraction(species, 3, 4, 40.0); // Pigeon -> Corbeau (40%)
+    addInteraction(species, 3, 5, 15.0); // Pigeon -> Hibou (15%)
+    addInteraction(species, 4, 1, 10.0); // Corbeau -> Faucon (10%)
+    addInteraction(species, 8, 7, 20.0); // Rouge-gorge -> Colibri (20%)
+    addInteraction(species, 7, 9, 30.0); // Colibri -> Perroquet (30%)
+
+    // Interaction avec l'utilisateur
+    char input[50];
+    printf("Entrez le nom de l'espece pour obtenir ses informations (ou 'exit' pour quitter) : ");
+    while (1) {
+        scanf("%s", input);
+        if (strcmp(input, "exit") == 0) {
+            break;
+        }
+        displaySpeciesInfo(species, n, input);
+        printf("\nEntrez un autre nom d'espece (ou 'exit' pour quitter) : ");
+    }
+
+    return 0;
+}
