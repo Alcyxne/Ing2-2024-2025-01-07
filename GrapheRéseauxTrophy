@@ -1,27 +1,16 @@
-digraph TrophicNetwork {
-    // Définir les noeuds (espèces) avec leurs biomasses en étiquette
-    Phytoplancton [label="Phytoplancton\nBiomasse: 500"];
-Zooplancton [label="Zooplancton\nBiomasse: 300"];
-Algues [label="Algues\nBiomasse: 400"];
-Petit_poisson [label="Petit Poisson\nBiomasse: 200"];
-Grand_poisson [label="Grand Poisson\nBiomasse: 100"];
-Crustaces [label="Crustacés\nBiomasse: 150"];
-Oiseaux_marins [label="Oiseaux Marins\nBiomasse: 50"];
-Requin [label="Requin\nBiomasse: 20"];
-Dauphin [label="Dauphin\nBiomasse: 30"];
-Orque [label="Orque\nBiomasse: 10"];
+digraph MarineNetwork {
+    rankdir=LR;
+    node [shape=ellipse, style=filled, fillcolor=lightblue];
 
-// Définir les relations trophiques avec les poids (flux de biomasse)
-    Phytoplancton -> Zooplancton [label="25"];
-Phytoplancton -> Algues [label="25"];
-Zooplancton -> Petit_poisson [label="15"];
-Algues -> Petit_poisson [label="20"];
-Petit_poisson -> Grand_poisson [label="10"];
-Petit_poisson -> Crustaces [label="10"];
-Crustaces -> Oiseaux_marins [label="7.5"];
-Grand_poisson -> Requin [label="5"];
-Grand_poisson -> Dauphin [label="5"];
-Dauphin -> Orque [label="1.5"];
-Requin -> Orque [label="1"];
+    "Phytoplancton" -> "Zooplancton" [label="50.0%"];
+    "Zooplancton" -> "Crevette" [label="40.0%"];
+    "Crevette" -> "Petit Poisson" [label="35.0%"];
+    "Petit Poisson" -> "Grand Poisson" [label="25.0%"];
+    "Petit Poisson" -> "Tortue" [label="10.0%"];
+    "Grand Poisson" -> "Requin" [label="20.0%"];
+    "Tortue" -> "Otarie" [label="15.0%"];
+    "Otarie" -> "Orque" [label="30.0%"];
+    "Oiseau Marin" -> "Orque" [label="5.0%"];
+    "Phytoplancton" -> "Oiseau Marin" [label="15.0%"];
 }
 //graph.dot
