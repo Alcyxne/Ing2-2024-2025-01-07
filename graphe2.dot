@@ -1,0 +1,25 @@
+digraph ReseauTrophique {
+    // Définition des sommets
+    "Moineau";
+"Faucon";
+"Merle";
+"Pigeon";
+"Corbeau";
+"Hibou";
+"Aigle";
+"Colibri";
+"Rouge-gorge";
+"Perroquet";
+
+// Relations avec des poids
+    "Moineau" -> "Faucon" [label="30%"];
+"Moineau" -> "Hibou" [label="20%"];
+"Faucon" -> "Aigle" [label="15%"];
+"Merle" -> "Faucon" [label="25%"];
+"Merle" -> "Colibri" [label="10%"];
+"Pigeon" -> "Corbeau" [label="40%"];
+"Pigeon" -> "Hibou" [label="15%"];
+"Corbeau" -> "Faucon" [label="10%"];
+"Rouge-gorge" -> "Colibri" [label="20%"];
+"Colibri" -> "Perroquet" [label="30%"];
+}
