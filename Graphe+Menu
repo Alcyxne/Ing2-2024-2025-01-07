@@ -1,1 +1,187 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SPECIES 10
+#define MAX_RELATIONS 10
+
+// Structure pour représenter une espèce
+typedef struct {
+    char name[50];             // Nom de l'espèce
+    int eats[MAX_RELATIONS];   // Index des espèces que cette espèce mange
+    float eatWeights[MAX_RELATIONS]; // Fréquences de prédation pour chaque proie
+    int eatenBy[MAX_RELATIONS]; // Index des espèces qui mangent cette espèce
+    float eatenByWeights[MAX_RELATIONS]; // Fréquences de prédation par chaque prédateur
+    int eatCount;              // Nombre d'espèces qu'elle mange
+    int eatenByCount;          // Nombre d'espèces qui la mangent
+} Species;
+
+// Initialiser une espèce
+void initSpecies(Species *species, char *name) {
+    strcpy(species->name, name);
+    species->eatCount = 0;
+    species->eatenByCount = 0;
+}
+
+// Ajouter une interaction (prédation avec poids)
+void addInteraction(Species species[], int prey, int predator, float weight) {
+    species[predator].eats[species[predator].eatCount] = prey;
+    species[predator].eatWeights[species[predator].eatCount++] = weight;
+
+    species[prey].eatenBy[species[prey].eatenByCount] = predator;
+    species[prey].eatenByWeights[species[prey].eatenByCount++] = weight;
+}
+
+// Afficher les informations d'une espèce spécifique
+void displaySpeciesInfo(Species species[], int index) {
+    printf("\nEspece : %s\n", species[index].name);
+
+    // Liste des espèces qu'elle mange
+    printf("  Mange quoi : ");
+    if (species[index].eatCount == 0) {
+        printf("Aucun\n");
+    } else {
+        for (int j = 0; j < species[index].eatCount; j++) {
+            printf("%s (%.1f%%) ", species[species[index].eats[j]].name, species[index].eatWeights[j]);
+        }
+        printf("\n");
+    }
+
+    // Liste des espèces qui la mangent
+    printf("  Mangee par : ");
+    if (species[index].eatenByCount == 0) {
+        printf("Aucun\n");
+    } else {
+        for (int j = 0; j < species[index].eatenByCount; j++) {
+            printf("%s (%.1f%%) ", species[species[index].eatenBy[j]].name, species[index].eatenByWeights[j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+// Créer un réseau trophique spécifique
+void createBirdsNetwork(Species species[]) {
+    initSpecies(&species[0], "Moineau");
+    initSpecies(&species[1], "Faucon");
+    initSpecies(&species[2], "Merle");
+    initSpecies(&species[3], "Pigeon");
+    initSpecies(&species[4], "Corbeau");
+    initSpecies(&species[5], "Hibou");
+    initSpecies(&species[6], "Aigle");
+    initSpecies(&species[7], "Colibri");
+    initSpecies(&species[8], "Rouge-gorge");
+    initSpecies(&species[9], "Perroquet");
+
+    addInteraction(species, 0, 1, 30.0); // Moineau -> Faucon (30%)
+    addInteraction(species, 0, 5, 20.0); // Moineau -> Hibou (20%)
+    addInteraction(species, 1, 6, 15.0); // Faucon -> Aigle (15%)
+    addInteraction(species, 2, 1, 25.0); // Merle -> Faucon (25%)
+    addInteraction(species, 2, 7, 10.0); // Merle -> Colibri (10%)
+    addInteraction(species, 3, 4, 40.0); // Pigeon -> Corbeau (40%)
+    addInteraction(species, 3, 5, 15.0); // Pigeon -> Hibou (15%)
+    addInteraction(species, 4, 1, 10.0); // Corbeau -> Faucon (10%)
+    addInteraction(species, 8, 7, 20.0); // Rouge-gorge -> Colibri (20%)
+    addInteraction(species, 7, 9, 30.0); // Colibri -> Perroquet (30%)
+}
+
+// Ajouter d'autres réseaux trophiques ici
+void createMarineNetwork(Species species[]) {
+    initSpecies(&species[0], "Phytoplancton");
+    initSpecies(&species[1], "Zooplancton");
+    initSpecies(&species[2], "Crevette");
+    initSpecies(&species[3], "Petit Poisson");
+    initSpecies(&species[4], "Grand Poisson");
+    initSpecies(&species[5], "Tortue");
+    initSpecies(&species[6], "Otarie");
+    initSpecies(&species[7], "Requin");
+    initSpecies(&species[8], "Orque");
+    initSpecies(&species[9], "Oiseau Marin");
+
+    addInteraction(species, 0, 1, 50.0); // Phytoplancton -> Zooplancton (50%)
+    addInteraction(species, 1, 2, 40.0); // Zooplancton -> Crevette (40%)
+    addInteraction(species, 2, 3, 35.0); // Crevette -> Petit Poisson (35%)
+    addInteraction(species, 3, 4, 25.0); // Petit Poisson -> Grand Poisson (25%)
+    addInteraction(species, 3, 5, 10.0); // Petit Poisson -> Tortue (10%)
+    addInteraction(species, 4, 7, 20.0); // Grand Poisson -> Requin (20%)
+    addInteraction(species, 5, 6, 15.0); // Tortue -> Otarie (15%)
+    addInteraction(species, 6, 8, 30.0); // Otarie -> Orque (30%)
+    addInteraction(species, 9, 8, 5.0);  // Oiseau Marin -> Orque (5%)
+    addInteraction(species, 0, 9, 15.0); // Phytoplancton -> Oiseau Marin (15%)
+}
+
+// Effacer l'écran sous Windows
+void clearScreen() {
+    system("cls"); // Sur Windows
+}
+
+int main() {
+    int choice, speciesChoice;
+    Species species[MAX_SPECIES];
+
+    while (1) {
+        clearScreen(); // Effacer l'écran avant chaque cycle de menu
+
+        // Affichage du menu
+        printf("\n===== Menu Reseaux Trophiques =====\n");
+        printf("1. Reseau Trophique des Oiseaux\n");
+        printf("2. Reseau Trophique Marin\n");
+        printf("3. Quitter\n");
+        printf("Entrez votre choix : ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                createBirdsNetwork(species);
+                while (1) {
+                    printf("\nSelectionnez une espece (0 a 9) ou 10 pour revenir au menu principal :\n");
+                    for (int i = 0; i < 10; i++) {
+                        printf("%d. %s\n", i, species[i].name);
+                    }
+                    printf("Entrez le numero de l'espece : ");
+                    scanf("%d", &speciesChoice);
+                    if (speciesChoice >= 0 && speciesChoice < 10) {
+                        clearScreen(); // Effacer l'écran avant d'afficher les informations de l'espèce
+                        displaySpeciesInfo(species, speciesChoice);
+                    } else if (speciesChoice == 10) {
+                        break; // Retour au menu principal
+                    } else {
+                        printf("Choix invalide.\n");
+                    }
+                }
+                break;
+
+            case 2:
+                createMarineNetwork(species);
+                while (1) {
+                    printf("\nSelectionnez une espece (0 a 9) ou 10 pour revenir au menu principal :\n");
+                    for (int i = 0; i < 10; i++) {
+                        printf("%d. %s\n", i, species[i].name);
+                    }
+                    printf("Entrez le numero de l'espece : ");
+                    scanf("%d", &speciesChoice);
+                    if (speciesChoice >= 0 && speciesChoice < 10) {
+                        displaySpeciesInfo(species, speciesChoice);
+                    } else if (speciesChoice == 10) {
+                        break; // Retour au menu principal
+                    } else {
+                        printf("Choix invalide.\n");
+                    }
+                }
+                break;
+
+            case 3:
+                printf("Merci d'avoir utilisé le programme !\n");
+                return 0; // Quitter le programme
+
+            default:
+                printf("Choix invalide. Essayez encore.\n");
+                break;
+        }
+    }
+
+    return 0;
+}
+
+
 
