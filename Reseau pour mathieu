@@ -1,0 +1,412 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX 100
+#define NOM_MAX 50
+
+typedef struct {
+    char predateur[NOM_MAX];
+    char proie[NOM_MAX];
+    float poids; // Pourcentage
+    int population; // Nombre d'individus
+    float tauxCroissance; // Taux de croissance dynamique
+    int capacitePortage; // Capacité de l'environnement dynamique
+} Relation;
+
+// Déclaration de la fonction pour simuler l'évolution des populations
+void simulerEvolutionPopulations(int *population, float tauxCroissance, int capacitePortage, int annees, float pressionPredation);
+
+// Fonction pour mettre tout en minuscule (pour comparaison)
+void toLowerCaseAndRemoveAccents(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);  // Convertir en minuscule
+    }
+}
+
+// Lire les relations depuis un fichier texte
+int lireRelations(const char *nomFichier, Relation relations[MAX], int *nbRelations) {
+    FILE *fichier = fopen(nomFichier, "r");
+    if (!fichier) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return 0;
+    }
+
+    *nbRelations = 0;
+    while (fscanf(fichier, "%s -> %s : %f%% : %d individus : %f : %d",
+                  relations[*nbRelations].predateur,
+                  relations[*nbRelations].proie,
+                  &relations[*nbRelations].poids,
+                  &relations[*nbRelations].population,
+                  &relations[*nbRelations].tauxCroissance,
+                  &relations[*nbRelations].capacitePortage) == 6) {
+        (*nbRelations)++;
+    }
+    fclose(fichier);
+    return 1;
+}
+
+// Calculer un taux de croissance variable en fonction des interactions
+float calculerTauxCroissanceVariable(float tauxCroissanceInitial, int population, int capacitePortage, float pressionPredation) {
+    // Par exemple, si la population est proche de la capacité de support, réduire le taux de croissance
+    float tauxCroissance = tauxCroissanceInitial * (1 - (float)population / capacitePortage);
+
+    // Si la pression de prédation est élevée, réduire davantage le taux de croissance
+    tauxCroissance -= pressionPredation;
+
+    // S'assurer que le taux de croissance ne devient pas négatif
+    if (tauxCroissance < 0) {
+        tauxCroissance = 0;
+    }
+
+    return tauxCroissance;
+}
+
+// Calculer la capacité de support variable
+int calculerCapaciteSupportVariable(int capacitePortageInitiale, int consommationRessources) {
+    // Par exemple, si une espèce consomme trop de ressources, la capacité de support diminue
+    int capacitePortage = capacitePortageInitiale - consommationRessources;
+
+    // S'assurer que la capacité de support ne devient pas négative
+    if (capacitePortage < 0) {
+        capacitePortage = 0;
+    }
+
+    return capacitePortage;
+}
+
+// Simuler l'évolution de la population avec des facteurs dynamiques
+void simulerPopulationDynamique(int *population, float tauxCroissanceInitial, int capacitePortageInitiale, int annees, float pressionPredation) {
+    int capacitePortage = capacitePortageInitiale;
+
+    for (int i = 1; i <= annees; i++) {
+        // Calculer un taux de croissance variable en fonction de la population et de la pression de prédation
+        float tauxCroissance = calculerTauxCroissanceVariable(tauxCroissanceInitial, *population, capacitePortage, pressionPredation);
+
+        // Mettre à jour la population en fonction du taux de croissance
+        *population = (int)(*population + tauxCroissance * (*population) * (1 - (float)(*population) / capacitePortage));
+
+        // Mettre à jour la capacité de support en fonction de la consommation de ressources
+        capacitePortage = calculerCapaciteSupportVariable(capacitePortageInitiale, 100); // Exemple d'une consommation de ressources par an
+
+        printf("Année %d: Population = %d, Capacite de support = %d\n", i, *population, capacitePortage);
+    }
+}
+
+// Fonction pour simuler l'évolution des populations (prise en compte dynamique de K et du taux de croissance)
+void simulerEvolutionPopulations(int *population, float tauxCroissance, int capacitePortage, int annees, float pressionPredation) {
+    int capaciteActuelle = capacitePortage;
+
+    for (int i = 1; i <= annees; i++) {
+        // Calculer un taux de croissance dynamique
+        float tauxCroissanceVariable = calculerTauxCroissanceVariable(tauxCroissance, *population, capaciteActuelle, pressionPredation);
+
+        // Mettre à jour la population avec la formule logistique
+        *population = (int)(*population + tauxCroissanceVariable * (*population) * (1 - (float)(*population) / capaciteActuelle));
+
+        // Mettre à jour la capacité de support en fonction de l'évolution de la consommation
+        capaciteActuelle = calculerCapaciteSupportVariable(capacitePortage, 100); // Consommation par les autres espèces
+
+        // Afficher l'évolution
+        printf("Année %d : Population = %d, Capacité de support = %d\n", i, *population, capaciteActuelle);
+
+        // S'assurer que la population ne devient pas négative
+        if (*population < 0) {
+            *population = 0;
+        }
+    }
+}
+
+// Fonction principale
+int main() {
+    Relation relations[MAX];
+    int nbRelations;
+
+    char nomFichier[100];
+    printf("Entrez le nom du fichier contenant le graphe trophique : ");
+    scanf("%s", nomFichier);
+
+    // Lire les relations depuis le fichier
+    if (!lireRelations(nomFichier, relations, &nbRelations)) {
+        return 1;
+    }
+
+    int choix;
+    char especeRecherchee[NOM_MAX];
+
+    while (1) {
+        printf("\n--- Menu ---\n");
+        printf("1. Rechercher une espece\n");
+        printf("2. Afficher le graphe\n");
+        printf("3. Simuler l'evolution des populations\n");
+        printf("4. Quitter\n");
+        printf("Veuillez entrer le numero de votre choix : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("\nEntrez le nom de l'espece a rechercher : ");
+                getchar();  // Consomme le '\n' restant dans le buffer
+                fgets(especeRecherchee, NOM_MAX, stdin);
+                especeRecherchee[strcspn(especeRecherchee, "\n")] = '\0'; // Supprime le retour à la ligne
+                // Afficher les relations pour l'espèce
+                break;
+
+            case 2:
+                // Afficher le graphe
+                break;
+
+            case 3:
+                printf("Entrez le nom de l'espece a simuler : ");
+                getchar();  // Consomme le '\n' restant dans le buffer
+                fgets(especeRecherchee, NOM_MAX, stdin);
+                especeRecherchee[strcspn(especeRecherchee, "\n")] = '\0'; // Supprime le retour à la ligne
+
+                // Trouver l'espèce et récupérer sa population initiale, son taux de croissance (r), et K
+                int populationInitiale = 0;
+                float tauxCroissance = 0.1; // Par exemple, 10% de croissance par an
+                int capacitePortage = 1000; // Exemple de capacité de l'environnement
+
+                for (int i = 0; i < nbRelations; i++) {
+                    if (strcmp(relations[i].predateur, especeRecherchee) == 0 || strcmp(relations[i].proie, especeRecherchee) == 0) {
+                        populationInitiale = relations[i].population;
+                        tauxCroissance = relations[i].tauxCroissance;
+                        capacitePortage = relations[i].capacitePortage;
+                        break;
+                    }
+                }
+
+                if (populationInitiale == 0) {
+                    printf("Espèce non trouvée.\n");
+                    break;
+                }
+
+                // Demander à l'utilisateur combien d'années il souhaite simuler
+                int annees;
+                printf("Entrez le nombre d'années à simuler : ");
+                scanf("%d", &annees);
+
+                // Simuler l'évolution de la population
+                printf("Simulation de l'évolution de la population de '%s' pendant %d années :\n", especeRecherchee, annees);
+                simulerEvolutionPopulations(&populationInitiale, tauxCroissance, capacitePortage, annees, 0.1); // Exemple de pression de prédation de 10%
+                break;
+
+            case 4:
+                printf("Merci d'avoir utilise le programme. A bientot !\n");
+                return 0;
+
+            default:
+                printf("Choix invalide, veuillez reessayer.\n");
+                break;
+        }
+    }
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX 100
+#define NOM_MAX 50
+
+typedef struct {
+    char predateur[NOM_MAX];
+    char proie[NOM_MAX];
+    float poids; // Pourcentage
+    int population; // Nombre d'individus
+    float tauxCroissance; // Taux de croissance dynamique
+    int capacitePortage; // Capacité de l'environnement dynamique
+} Relation;
+
+// Déclaration de la fonction pour simuler l'évolution des populations
+void simulerEvolutionPopulations(int *population, float tauxCroissance, int capacitePortage, int annees, float pressionPredation);
+
+// Fonction pour mettre tout en minuscule (pour comparaison)
+void toLowerCaseAndRemoveAccents(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);  // Convertir en minuscule
+    }
+}
+
+// Lire les relations depuis un fichier texte
+int lireRelations(const char *nomFichier, Relation relations[MAX], int *nbRelations) {
+    FILE *fichier = fopen(nomFichier, "r");
+    if (!fichier) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return 0;
+    }
+
+    *nbRelations = 0;
+    while (fscanf(fichier, "%s -> %s : %f%% : %d individus : %f : %d",
+                  relations[*nbRelations].predateur,
+                  relations[*nbRelations].proie,
+                  &relations[*nbRelations].poids,
+                  &relations[*nbRelations].population,
+                  &relations[*nbRelations].tauxCroissance,
+                  &relations[*nbRelations].capacitePortage) == 6) {
+        (*nbRelations)++;
+    }
+    fclose(fichier);
+    return 1;
+}
+
+// Calculer un taux de croissance variable en fonction des interactions
+float calculerTauxCroissanceVariable(float tauxCroissanceInitial, int population, int capacitePortage, float pressionPredation) {
+    // Par exemple, si la population est proche de la capacité de support, réduire le taux de croissance
+    float tauxCroissance = tauxCroissanceInitial * (1 - (float)population / capacitePortage);
+
+    // Si la pression de prédation est élevée, réduire davantage le taux de croissance
+    tauxCroissance -= pressionPredation;
+
+    // S'assurer que le taux de croissance ne devient pas négatif
+    if (tauxCroissance < 0) {
+        tauxCroissance = 0;
+    }
+
+    return tauxCroissance;
+}
+
+// Calculer la capacité de support variable
+int calculerCapaciteSupportVariable(int capacitePortageInitiale, int consommationRessources) {
+    // Par exemple, si une espèce consomme trop de ressources, la capacité de support diminue
+    int capacitePortage = capacitePortageInitiale - consommationRessources;
+
+    // S'assurer que la capacité de support ne devient pas négative
+    if (capacitePortage < 0) {
+        capacitePortage = 0;
+    }
+
+    return capacitePortage;
+}
+
+// Simuler l'évolution de la population avec des facteurs dynamiques
+void simulerPopulationDynamique(int *population, float tauxCroissanceInitial, int capacitePortageInitiale, int annees, float pressionPredation) {
+    int capacitePortage = capacitePortageInitiale;
+
+    for (int i = 1; i <= annees; i++) {
+        // Calculer un taux de croissance variable en fonction de la population et de la pression de prédation
+        float tauxCroissance = calculerTauxCroissanceVariable(tauxCroissanceInitial, *population, capacitePortage, pressionPredation);
+
+        // Mettre à jour la population en fonction du taux de croissance
+        *population = (int)(*population + tauxCroissance * (*population) * (1 - (float)(*population) / capacitePortage));
+
+        // Mettre à jour la capacité de support en fonction de la consommation de ressources
+        capacitePortage = calculerCapaciteSupportVariable(capacitePortageInitiale, 100); // Exemple d'une consommation de ressources par an
+
+        printf("Année %d: Population = %d, Capacite de support = %d\n", i, *population, capacitePortage);
+    }
+}
+
+// Fonction pour simuler l'évolution des populations (prise en compte dynamique de K et du taux de croissance)
+void simulerEvolutionPopulations(int *population, float tauxCroissance, int capacitePortage, int annees, float pressionPredation) {
+    int capaciteActuelle = capacitePortage;
+
+    for (int i = 1; i <= annees; i++) {
+        // Calculer un taux de croissance dynamique
+        float tauxCroissanceVariable = calculerTauxCroissanceVariable(tauxCroissance, *population, capaciteActuelle, pressionPredation);
+
+        // Mettre à jour la population avec la formule logistique
+        *population = (int)(*population + tauxCroissanceVariable * (*population) * (1 - (float)(*population) / capaciteActuelle));
+
+        // Mettre à jour la capacité de support en fonction de l'évolution de la consommation
+        capaciteActuelle = calculerCapaciteSupportVariable(capacitePortage, 100); // Consommation par les autres espèces
+
+        // Afficher l'évolution
+        printf("Année %d : Population = %d, Capacité de support = %d\n", i, *population, capaciteActuelle);
+
+        // S'assurer que la population ne devient pas négative
+        if (*population < 0) {
+            *population = 0;
+        }
+    }
+}
+
+// Fonction principale
+int main() {
+    Relation relations[MAX];
+    int nbRelations;
+
+    char nomFichier[100];
+    printf("Entrez le nom du fichier contenant le graphe trophique : ");
+    scanf("%s", nomFichier);
+
+    // Lire les relations depuis le fichier
+    if (!lireRelations(nomFichier, relations, &nbRelations)) {
+        return 1;
+    }
+
+    int choix;
+    char especeRecherchee[NOM_MAX];
+
+    while (1) {
+        printf("\n--- Menu ---\n");
+        printf("1. Rechercher une espece\n");
+        printf("2. Afficher le graphe\n");
+        printf("3. Simuler l'evolution des populations\n");
+        printf("4. Quitter\n");
+        printf("Veuillez entrer le numero de votre choix : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("\nEntrez le nom de l'espece a rechercher : ");
+                getchar();  // Consomme le '\n' restant dans le buffer
+                fgets(especeRecherchee, NOM_MAX, stdin);
+                especeRecherchee[strcspn(especeRecherchee, "\n")] = '\0'; // Supprime le retour à la ligne
+                // Afficher les relations pour l'espèce
+                break;
+
+            case 2:
+                // Afficher le graphe
+                break;
+
+            case 3:
+                printf("Entrez le nom de l'espece a simuler : ");
+                getchar();  // Consomme le '\n' restant dans le buffer
+                fgets(especeRecherchee, NOM_MAX, stdin);
+                especeRecherchee[strcspn(especeRecherchee, "\n")] = '\0'; // Supprime le retour à la ligne
+
+                // Trouver l'espèce et récupérer sa population initiale, son taux de croissance (r), et K
+                int populationInitiale = 0;
+                float tauxCroissance = 0.1; // Par exemple, 10% de croissance par an
+                int capacitePortage = 1000; // Exemple de capacité de l'environnement
+
+                for (int i = 0; i < nbRelations; i++) {
+                    if (strcmp(relations[i].predateur, especeRecherchee) == 0 || strcmp(relations[i].proie, especeRecherchee) == 0) {
+                        populationInitiale = relations[i].population;
+                        tauxCroissance = relations[i].tauxCroissance;
+                        capacitePortage = relations[i].capacitePortage;
+                        break;
+                    }
+                }
+
+                if (populationInitiale == 0) {
+                    printf("Espèce non trouvée.\n");
+                    break;
+                }
+
+                // Demander à l'utilisateur combien d'années il souhaite simuler
+                int annees;
+                printf("Entrez le nombre d'années à simuler : ");
+                scanf("%d", &annees);
+
+                // Simuler l'évolution de la population
+                printf("Simulation de l'évolution de la population de '%s' pendant %d années :\n", especeRecherchee, annees);
+                simulerEvolutionPopulations(&populationInitiale, tauxCroissance, capacitePortage, annees, 0.1); // Exemple de pression de prédation de 10%
+                break;
+
+            case 4:
+                printf("Merci d'avoir utilise le programme. A bientot !\n");
+                return 0;
+
+            default:
+                printf("Choix invalide, veuillez reessayer.\n");
+                break;
+        }
+    }
+
+    return 0;
+}
