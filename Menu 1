@@ -1,0 +1,95 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Prototypes des fonctions associées aux options du menu
+void detectCycles();
+void fordFulkerson();
+void dijkstra();
+void prim();
+void kruskal();
+void simulatePopulation();
+
+int main() {
+    int choix;
+    int sousChoix;
+
+    do {
+        // Affichage du menu principal
+        printf("\n--- Menu Principal ---\n");
+        printf("1. Détection de cycles (DFS)\n");
+        printf("2. Analyse des flux (Ford-Fulkerson)\n");
+        printf("3. Algorithme de Dijkstra (plus court chemin)\n");
+        printf("4. Construction d'un arbre couvrant minimal\n");
+        printf("5. Simulation des dynamiques de population\n");
+        printf("6. Quitter\n");
+        printf("Sélectionnez une option (1-6) : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("\n--- Détection de cycles ---\n");
+                detectCycles();
+                break;
+            case 2:
+                printf("\n--- Analyse des flux ---\n");
+                fordFulkerson();
+                break;
+            case 3:
+                printf("\n--- Algorithme de Dijkstra ---\n");
+                dijkstra();
+                break;
+            case 4:
+                printf("\n--- Construction d'un arbre couvrant minimal ---\n");
+                printf("1. Utiliser Prim\n");
+                printf("2. Utiliser Kruskal\n");
+                printf("Sélectionnez une option (1-2) : ");
+                scanf("%d", &sousChoix);
+                if (sousChoix == 1) {
+                    printf("Lancement de l'algorithme de Prim...\n");
+                    prim();
+                } else if (sousChoix == 2) {
+                    printf("Lancement de l'algorithme de Kruskal...\n");
+                    kruskal();
+                } else {
+                    printf("Option invalide.\n");
+                }
+                break;
+            case 5:
+                printf("\n--- Simulation des dynamiques de population ---\n");
+                simulatePopulation();
+                break;
+            case 6:
+                printf("Au revoir !\n");
+                break;
+            default:
+                printf("Option invalide. Veuillez réessayer.\n");
+        }
+    } while (choix != 6);
+
+    return 0;
+}
+
+// Implémentations fictives des fonctions
+void detectCycles() {
+    printf("Fonction de détection de cycles appelée.\n");
+}
+
+void fordFulkerson() {
+    printf("Fonction d'analyse des flux appelée.\n");
+}
+
+void dijkstra() {
+    printf("Fonction de l'algorithme de Dijkstra appelée.\n");
+}
+
+void prim() {
+    printf("Fonction de l'algorithme de Prim appelée.\n");
+}
+
+void kruskal() {
+    printf("Fonction de l'algorithme de Kruskal appelée.\n");
+}
+
+void simulatePopulation() {
+    printf("Fonction de simulation des dynamiques de population appelée.\n");
+}
