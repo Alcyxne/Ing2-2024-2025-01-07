@@ -93,3 +93,189 @@ void kruskal() {
 void simulatePopulation() {
     printf("Fonction de simulation des dynamiques de population appelée.\n");
 }
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h> // Pour usleep (délai)
+
+// Définition des constantes
+#define MAX_SPECIES 10
+#define MAX_RELATIONS 10
+#define MONTHS_IN_YEAR 12
+
+// Structure pour représenter une espèce
+typedef struct {
+    char name[50];             // Nom de l'espèce
+    int eats[MAX_RELATIONS];   // Index des espèces que cette espèce mange
+    float eatWeights[MAX_RELATIONS]; // Fréquences de prédation pour chaque proie
+    int eatenBy[MAX_RELATIONS];// Index des espèces qui mangent cette espèce
+    float eatenByWeights[MAX_RELATIONS]; // Fréquences de prédation par chaque prédateur
+    int eatCount;              // Nombre d'espèces qu'elle mange
+    int eatenByCount;          // Nombre d'espèces qui la mangent
+    float population;          // Population actuelle
+    float growthRate;          // Taux de croissance r
+    float carryingCapacity;    // Capacité de charge K
+} Species;
+
+// Initialiser une espèce
+void initSpecies(Species *species, char *name, float initialPop, float r, float K) {
+    strcpy(species->name, name);
+    species->eatCount = 0;
+    species->eatenByCount = 0;
+    species->population = initialPop;
+    species->growthRate = r;
+    species->carryingCapacity = K;
+}
+
+// Ajouter une interaction (prédation avec poids)
+void addInteraction(Species species[], int prey, int predator, float weight) {
+    species[predator].eats[species[predator].eatCount] = prey;
+    species[predator].eatWeights[species[predator].eatCount++] = weight;
+
+    species[prey].eatenBy[species[prey].eatenByCount] = predator;
+    species[prey].eatenByWeights[species[prey].eatenByCount++] = weight;
+}
+
+// Calculer la population d'une espèce pour le prochain tour
+void updatePopulation(Species species[], int index) {
+    Species *sp = &species[index];
+    float consumption = 0.0;
+
+    // Calcul des prélèvements par les prédateurs
+    for (int i = 0; i < sp->eatenByCount; i++) {
+        int predatorIndex = sp->eatenBy[i];
+        consumption += species[predatorIndex].population * sp->eatenByWeights[i] / 100.0;
+    }
+
+    // Mise à jour selon le modèle logistique
+    float growth = sp->growthRate * sp->population * (1 - sp->population / sp->carryingCapacity);
+    sp->population = sp->population + growth - consumption;
+
+    // Assurer que la population reste non négative
+    if (sp->population < 0) {
+        sp->population = 0;
+    }
+}
+
+// Afficher les informations sur toutes les espèces
+void displayAllSpecies(Species species[], int n, int year, int month) {
+    printf("\n--- Annee %d, Mois %d ---\n", year, month);
+    for (int i = 0; i < n; i++) {
+        printf("%s : %d\n", species[i].name, (int)(species[i].population + 0.5));
+    }
+    printf("--------------------------\n");
+}
+
+// Simulation de la dynamique des populations
+void simulate(Species species[], int n, int years) {
+    int totalMonths = years * MONTHS_IN_YEAR;
+
+    for (int month = 1; month <= totalMonths; month++) {
+        int currentYear = (month - 1) / MONTHS_IN_YEAR + 1;
+        int currentMonth = (month - 1) % MONTHS_IN_YEAR + 1;
+
+        displayAllSpecies(species, n, currentYear, currentMonth);
+
+        // Mettre à jour les populations
+        for (int i = 0; i < n; i++) {
+            updatePopulation(species, i);
+        }
+
+        // Attendre un moment avant la prochaine itération
+        usleep(500000); // 500ms
+    }
+}
+
+// Afficher les relations pour une espèce spécifique
+void displaySpeciesRelations(Species species[], int n) {
+    int choice;
+    printf("Selectionnez une espece (0-%d) :\n", n - 1);
+    for (int i = 0; i < n; i++) {
+        printf("%d: %s\n", i, species[i].name);
+    }
+    scanf("%d", &choice);
+
+    if (choice < 0 || choice >= n) {
+        printf("Choix invalide.\n");
+        return;
+    }
+
+    Species *sp = &species[choice];
+    printf("\n--- Relations pour %s ---\n", sp->name);
+
+    printf("Il mange :\n");
+    for (int i = 0; i < sp->eatCount; i++) {
+        printf("- %s (%.1f%%)\n", species[sp->eats[i]].name, sp->eatWeights[i]);
+    }
+
+    printf("Il est mange par :\n");
+    for (int i = 0; i < sp->eatenByCount; i++) {
+        printf("- %s (%.1f%%)\n", species[sp->eatenBy[i]].name, sp->eatenByWeights[i]);
+    }
+    printf("--------------------------\n");
+}
+
+// Menu principal
+void menu(Species species[], int n) {
+    int choice;
+    do {
+        printf("\n--- Menu Principal ---\n");
+        printf("1. Lancer une simulation\n");
+        printf("2. Afficher les relations d'une espece\n");
+        printf("3. Quitter\n");
+        printf("Votre choix : ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+        case 1: {
+            int years;
+            printf("Entrez le nombre d'annees a simuler : ");
+            scanf("%d", &years);
+            simulate(species, n, years);
+            break;
+        }
+        case 2:
+            displaySpeciesRelations(species, n);
+            break;
+        case 3:
+            printf("Au revoir !\n");
+            break;
+        default:
+            printf("Choix invalide. Reessayez.\n");
+        }
+    } while (choice != 3);
+}
+
+// Programme principal
+int main() {
+    // Initialisation des espèces avec des estimations réalistes
+    int n = 10;
+    Species species[MAX_SPECIES];
+    initSpecies(&species[0], "Moineau", 500, 0.4, 5000);  // Moineau
+    initSpecies(&species[1], "Faucon", 10, 0.1, 500);     // Faucon
+    initSpecies(&species[2], "Merle", 700, 0.5, 8000);    // Merle
+    initSpecies(&species[3], "Pigeon", 800, 0.43, 5000);    // Pigeon
+    initSpecies(&species[4], "Corbeau", 50, 0.03, 1500);   // Corbeau
+    initSpecies(&species[5], "Hibou", 10, 0.04, 700);      // Hibou
+    initSpecies(&species[6], "Aigle", 5, 0.01, 200);       // Aigle
+    initSpecies(&species[7], "Colibri", 200, 0.2, 5200);  // Colibri
+    initSpecies(&species[8], "Rouge-gorge", 700, 0.4, 5000); // Rouge-gorge
+    initSpecies(&species[9], "Perroquet", 40, 0.1, 1000);  // Perroquet
+
+    // Définir les interactions avec des fréquences de prédation (en pourcentage)
+    addInteraction(species, 0, 1, 15.0); // Moineau -> Faucon (15%)
+    addInteraction(species, 0, 5, 20.0); // Moineau -> Hibou (20%)
+    addInteraction(species, 1, 6, 15.0); // Faucon -> Aigle (15%)
+    addInteraction(species, 2, 1, 15.0); // Merle -> Faucon (15%)
+    addInteraction(species, 2, 7, 10.0); // Merle -> Colibri (10%)
+    addInteraction(species, 3, 4, 30.0); // Pigeon -> Corbeau (30%)
+    addInteraction(species, 3, 5, 15.0); // Pigeon -> Hibou (15%)
+    addInteraction(species, 4, 1, 10.0); // Corbeau -> Faucon (10%)
+    addInteraction(species, 8, 7, 20.0); // Rouge-gorge -> Colibri (20%)
+    addInteraction(species, 7, 9, 30.0); // Colibri -> Perroquet (30%)
+
+    // Lancer le menu principal
+    menu(species, n);
+
+    return 0;
+}
